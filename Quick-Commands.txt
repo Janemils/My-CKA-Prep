@@ -1,0 +1,19 @@
+1. To output the yaml of a pod to a file:
+kubectl run nginx --image=nginx --dry-run=client -o yaml > pod-template.yaml
+
+2. Difference between replication controller and replication set:
+Replication Controller can manage only the pods created within the RC and is a legacy feature.
+Replication Set can manage even the existing pods using selectors.
+
+3. To edit a live object:
+kubectl edit rs/frontend
+
+4. To scale up or down the number of replicas:
+kubectl scale --replicas=4 rs/frontend
+
+5. To rollout to a newer version with a change cause:
+k set image deployment/nginx nginx:1.23.4
+
+6. Rollout history and to rollback:
+k rollout history deploy/nginx
+k rollout undo deploy/nginx --to-revision=1
