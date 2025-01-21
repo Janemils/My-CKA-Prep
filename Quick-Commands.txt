@@ -17,3 +17,13 @@ k set image deployment/nginx nginx:1.23.4
 6. Rollout history and to rollback:
 k rollout history deploy/nginx
 k rollout undo deploy/nginx --to-revision=1
+
+7. Exec into a pod:
+ k exec -it deploy-nm1-7d84fc98d5-d74hl -n nm-1 -- sh
+ 
+8. Create a service and expose a deployment to the service the imperative way.
+k expose deploy/deploy-nm1 --name=svc-nm1 -n nm-1 --port=80
+
+9. FQDN [Fully Qualified Domain Name}:
+curl svc-nm2.nm2.svc.cluster.local
+[<service-name>.<namespace>.svc.cluster.local]
