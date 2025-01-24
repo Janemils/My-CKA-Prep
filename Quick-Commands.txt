@@ -27,3 +27,9 @@ k expose deploy/deploy-nm1 --name=svc-nm1 -n nm-1 --port=80
 9. FQDN [Fully Qualified Domain Name}:
 curl svc-nm2.nm2.svc.cluster.local
 [<service-name>.<namespace>.svc.cluster.local]
+
+10. Cron Job syntax:
+[Minute (0-59)] [Hour (0-23)] [Day of Month (1-31)] [Month (1-12)]  [Day of week (0{sun}-6{sat})]
+
+To run a build every 5 minutes:
+*/5 * * * *
