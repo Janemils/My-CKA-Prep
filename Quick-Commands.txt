@@ -33,3 +33,23 @@ curl svc-nm2.nm2.svc.cluster.local
 
 To run a build every 5 minutes:
 */5 * * * *
+
+11. All the static pod manifest files in /etc/kubernetes/manifests path.
+
+12. To go inside the docker container (Node) for kind cluster:
+docker exec -it <container-name> bash 
+
+13. To label a node: 
+k label node cka-cluster-worker gpu="true"
+
+14. To remove the label of a node:
+k label node cka-cluster-worker gpu-
+
+15. To taint a node:
+k taint node cka-cluster-worker gpu=true:NoSchedule
+
+16.To remove the taint on a node:
+k taint node cka-cluster-worker gpu=true:NoSchedule-
+
+17. To check for where the kubelet is looking for creating the static pods, i.e static pod path, ssh into the worker node or the node where kubelet is up and running.
+Look for the config.yaml [Mostly in /var/lib/kubelet/config.yaml in the newer kubernetes versions.] and look out for the field 'staticPodPath'.
