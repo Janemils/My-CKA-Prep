@@ -1,0 +1,7 @@
+apiVersion: v1
+data:
+  FAIRY_LIGHT: Blue
+  FESTIVAL_NAME: Christmas
+kind: ConfigMap
+metadata:
+  name: config-maps3

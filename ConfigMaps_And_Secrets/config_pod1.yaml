@@ -1,0 +1,19 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: myapp-pod
+spec:
+  containers:
+    - name: myapp
+      image: nginx
+      env:
+        - name: HOUSE_NAME
+          valueFrom:
+            configMapKeyRef:
+              name: config-maps3
+              key: HOUSE_NAME
+        - name: GEL_NAME
+          valueFrom:
+            configMapKeyRef:
+              name: config-maps3
+              key: GEL_NAME
