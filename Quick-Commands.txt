@@ -17,6 +17,7 @@ k set image deployment/nginx nginx:1.23.4
 6. Rollout history and to rollback:
 k rollout history deploy/nginx
 k rollout undo deploy/nginx --to-revision=1
+To populate the change-cause section: kubectl annotate deployment/nginx-deployment kubernetes.io/change-cause="image updated to 1.16.1"
 
 7. Exec into a pod:
  k exec -it deploy-nm1-7d84fc98d5-d74hl -n nm-1 -- sh
@@ -53,3 +54,33 @@ k taint node cka-cluster-worker gpu=true:NoSchedule-
 
 17. To check for where the kubelet is looking for creating the static pods, i.e static pod path, ssh into the worker node or the node where kubelet is up and running.
 Look for the config.yaml [Mostly in /var/lib/kubelet/config.yaml in the newer kubernetes versions.] and look out for the field 'staticPodPath'.
+
+18.Difference between emtrypoint, command and arg in dockerfile and manifests:
+- If you do not supply commands and args for a container,  the default defined in docker images are used.
+- If you supply only args for a container, the default ENTRYPOINT defined in the docker image is run with the args that you supplied.
+- If you supply a command for a container, only the supplied command is used. The default ENTRYPOINT and CMD defined in the docker image are ignored and the command is run with the args supplied (or no args if none supplied).
+
+19. Creating config maps and secrets the imperative way:
+  
+  # Create a new config map named my-config with key1=config1 and key2=config2
+  kubectl create configmap <config-map-name> --from-literal=key1=value2 --from-literal=key2=value2
+   
+  # Create a new config map named my-config from the key=value pairs in the file
+  kubectl create configmap my-config --from-env-file=path/to/bar
+  Ex: k create cm config-maps3 --from-env-file=/path-to-directory/config-maps-value.txt
+  
+  config-maps-value.txt
+
+  HOUSE_NAME=Apollo
+  GEL_NAME=Aloe
+  
+  # Create a new secret named my-secret with key1=supersecret and key2=topsecret
+  kubectl create secret generic my-secret --from-literal=key1=supersecret --from-literal=key2=topsecret
+  
+  # Create a new secret named my-secret using a combination of a file and a literal
+  kubectl create secret generic my-secret --from-file=ssh-privatekey=path/to/id_rsa
+  
+  
+20. To read the secret out of the ETCD:
+	ETCDCTL_API=3 etcdctl    --cacert=/etc/kubernetes/pki/etcd/ca.crt      --cert=/etc/kubernetes/pki/etcd/server.crt    --key=/etc/kubernetes/pki/etcd/server.key     get /registry/secrets/default/secrets2
+  
