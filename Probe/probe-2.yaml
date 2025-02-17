@@ -1,0 +1,21 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  creationTimestamp: null
+  labels:
+    run: probe-2
+  name: probe-2
+spec:
+  containers:
+  - image: registry.k8s.io/e2e-test-images/agnhost:2.40
+    name: probe-2
+    resources: {}
+    livenessProbe:
+      httpGet:
+        path: /healthz
+        port: 8080
+      initialDelaySeconds: 5
+      periodSeconds: 10
+  dnsPolicy: ClusterFirst
+  restartPolicy: Always
+status: {}

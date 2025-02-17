@@ -83,4 +83,21 @@ Look for the config.yaml [Mostly in /var/lib/kubelet/config.yaml in the newer ku
   
 20. To read the secret out of the ETCD:
 	ETCDCTL_API=3 etcdctl    --cacert=/etc/kubernetes/pki/etcd/ca.crt      --cert=/etc/kubernetes/pki/etcd/server.crt    --key=/etc/kubernetes/pki/etcd/server.key     get /registry/secrets/default/secrets2
-  
+
+21. Health Probes:
+-> Liveness Probe: Monitors the application and restarts it if it fails.
+-> Readiness Probe: Ensures that your application is ready before serving traffic to it.
+-> Startup Probe: For Slow/legacy apps where the startup takes a lot of time for the app to be ready.
+
+22. Horizontal Autoscaling:
+-> Pre-Requisite: Must have metrics-server pod up and running.
+-> Create a deployment and service. The deployment must have requests and limits specified.
+-> Create a horizontal pod autoscaler for the deployment:
+kubectl autoscale deployment php-apache --cpu-percent=50 --min=1 --max=10
+-> Wait till the CPU percentage is read.
+kubectl get hpa php-apache --watch
+-> Once CPU percentage is read to 0~1%, run the command that will generate some load onto the application:
+kubectl run -i --tty load-generator --rm --image=busybox:1.28 --restart=Never -- /bin/sh -c "while sleep 0.01; do wget -q -O- http://php-apache; done"
+-> Now run the watch command again to observe if the pods get created automatically as soon as the CPU% crosses the threshold.
+-> Similarly stop the command and see, if it deletes the pod automatically, once the CPU% is below the threshold.
+
