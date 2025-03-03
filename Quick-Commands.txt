@@ -1,33 +1,51 @@
 1. To output the yaml of a pod to a file:
 kubectl run nginx --image=nginx --dry-run=client -o yaml > pod-template.yaml
 
+======================================================================================================================================================================================
+
 2. Difference between replication controller and replication set:
 Replication Controller can manage only the pods created within the RC and is a legacy feature.
 Replication Set can manage even the existing pods using selectors.
 
+======================================================================================================================================================================================
+
 3. To edit a live object:
 kubectl edit rs/frontend
+
+======================================================================================================================================================================================
 
 4. To scale up or down the number of replicas:
 kubectl scale --replicas=4 rs/frontend
 
+======================================================================================================================================================================================
+
 5. To rollout to a newer version with a change cause:
 k set image deployment/nginx nginx:1.23.4
+
+======================================================================================================================================================================================
 
 6. Rollout history and to rollback:
 k rollout history deploy/nginx
 k rollout undo deploy/nginx --to-revision=1
 To populate the change-cause section: kubectl annotate deployment/nginx-deployment kubernetes.io/change-cause="image updated to 1.16.1"
 
+======================================================================================================================================================================================
+
 7. Exec into a pod:
  k exec -it deploy-nm1-7d84fc98d5-d74hl -n nm-1 -- sh
  
+======================================================================================================================================================================================
+
 8. Create a service and expose a deployment to the service the imperative way.
 k expose deploy/deploy-nm1 --name=svc-nm1 -n nm-1 --port=80
+
+======================================================================================================================================================================================
 
 9. FQDN [Fully Qualified Domain Name}:
 curl svc-nm2.nm2.svc.cluster.local
 [<service-name>.<namespace>.svc.cluster.local]
+
+======================================================================================================================================================================================
 
 10. Cron Job syntax:
 [Minute (0-59)] [Hour (0-23)] [Day of Month (1-31)] [Month (1-12)]  [Day of week (0{sun}-6{sat})]
@@ -35,30 +53,48 @@ curl svc-nm2.nm2.svc.cluster.local
 To run a build every 5 minutes:
 */5 * * * *
 
+======================================================================================================================================================================================
+
 11. All the static pod manifest files in /etc/kubernetes/manifests path.
+
+======================================================================================================================================================================================
 
 12. To go inside the docker container (Node) for kind cluster:
 docker exec -it <container-name> bash 
 
+======================================================================================================================================================================================
+
 13. To label a node: 
 k label node cka-cluster-worker gpu="true"
+
+======================================================================================================================================================================================
 
 14. To remove the label of a node:
 k label node cka-cluster-worker gpu-
 
+======================================================================================================================================================================================
+
 15. To taint a node:
 k taint node cka-cluster-worker gpu=true:NoSchedule
+
+======================================================================================================================================================================================
 
 16.To remove the taint on a node:
 k taint node cka-cluster-worker gpu=true:NoSchedule-
 
+======================================================================================================================================================================================
+
 17. To check for where the kubelet is looking for creating the static pods, i.e static pod path, ssh into the worker node or the node where kubelet is up and running.
 Look for the config.yaml [Mostly in /var/lib/kubelet/config.yaml in the newer kubernetes versions.] and look out for the field 'staticPodPath'.
+
+======================================================================================================================================================================================
 
 18.Difference between emtrypoint, command and arg in dockerfile and manifests:
 - If you do not supply commands and args for a container,  the default defined in docker images are used.
 - If you supply only args for a container, the default ENTRYPOINT defined in the docker image is run with the args that you supplied.
 - If you supply a command for a container, only the supplied command is used. The default ENTRYPOINT and CMD defined in the docker image are ignored and the command is run with the args supplied (or no args if none supplied).
+
+======================================================================================================================================================================================
 
 19. Creating config maps and secrets the imperative way:
   
@@ -80,14 +116,20 @@ Look for the config.yaml [Mostly in /var/lib/kubelet/config.yaml in the newer ku
   # Create a new secret named my-secret using a combination of a file and a literal
   kubectl create secret generic my-secret --from-file=ssh-privatekey=path/to/id_rsa
   
-  
+
+======================================================================================================================================================================================
+
 20. To read the secret out of the ETCD:
 	ETCDCTL_API=3 etcdctl    --cacert=/etc/kubernetes/pki/etcd/ca.crt      --cert=/etc/kubernetes/pki/etcd/server.crt    --key=/etc/kubernetes/pki/etcd/server.key     get /registry/secrets/default/secrets2
+
+======================================================================================================================================================================================
 
 21. Health Probes:
 -> Liveness Probe: Monitors the application and restarts it if it fails.
 -> Readiness Probe: Ensures that your application is ready before serving traffic to it.
 -> Startup Probe: For Slow/legacy apps where the startup takes a lot of time for the app to be ready.
+
+======================================================================================================================================================================================
 
 22. Horizontal Autoscaling:
 -> Pre-Requisite: Must have metrics-server pod up and running.
@@ -100,4 +142,171 @@ kubectl get hpa php-apache --watch
 kubectl run -i --tty load-generator --rm --image=busybox:1.28 --restart=Never -- /bin/sh -c "while sleep 0.01; do wget -q -O- http://php-apache; done"
 -> Now run the watch command again to observe if the pods get created automatically as soon as the CPU% crosses the threshold.
 -> Similarly stop the command and see, if it deletes the pod automatically, once the CPU% is below the threshold.
+
+======================================================================================================================================================================================
+
+23. Cluster Upgrade [Via Kubeadm]:
+To get a specific version [say the latest version of 1.31.0], you need to ensure that the right version is mentioned in /etc/apt/sources.list.d/kubernetes.list file.
+the deb version must be pointing to v1.31, 
+deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.gpg] https://pkgs.k8s.io/core:/stable:/<mention-your-version-here>/deb/ /
+Example:
+deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.gpg] https://pkgs.k8s.io/core:/stable:/v.1.31/deb/ /
+
+This will list all the available versions in 1.31.*.
+------------------------------------------------------------------------------
+Listing all the kubeadm version:
+------------------------------------------------------------------------------
+sudo apt update
+sudo apt-cache madison kubeadm
+
+------------------------------------------------------------------------------
+Upgrading the Kubeadm tool to the desired version:
+------------------------------------------------------------------------------
+sudo apt-mark unhold kubeadm && \
+sudo apt-get update && sudo apt-get install -y kubeadm='1.31.0-1.1' && \
+sudo apt-mark hold kubeadm
+
+------------------------------------------------------------------------------
+Viewing the plan and Upgrading master node components:
+------------------------------------------------------------------------------
+k drain <master-node> --ignore-daemonsets
+sudo kubeadm upgrade plan
+sudo kubeadm upgrade apply v1.31.0-1.1
+
+------------------------------------------------------------------------------
+Upgrading the kubectl and kubelet to reflect the latest version upgrade:
+------------------------------------------------------------------------------
+sudo apt-mark unhold kubelet kubectl && \
+sudo apt-get update && sudo apt-get install -y kubelet='1.31.x-*' kubectl='1.31.x-*' && \
+sudo apt-mark hold kubelet kubectl
+
+------------------------------------------------------------------------------
+Restarting the kubelet:
+------------------------------------------------------------------------------
+sudo systemctl daemon-reload
+sudo systemctl restart kubelet
+k uncordon <master-node>
+
+
+
+TO UPGRADE THE WORKER NODE:
+------------------------------------------------------------------------------
+Viewing the plan and Upgrading master node components:
+------------------------------------------------------------------------------
+k drain <master-node> --ignore-daemonsets
+sudo kubeadm upgrade plan
+sudo kubeadm upgrade apply v1.31.0-1.1
+
+------------------------------------------------------------------------------
+Upgrading the kubectl and kubelet to reflect the latest version upgrade:
+------------------------------------------------------------------------------
+sudo apt-mark unhold kubelet kubectl && \
+sudo apt-get update && sudo apt-get install -y kubelet='1.31.x-*' kubectl='1.31.x-*' && \
+sudo apt-mark hold kubelet kubectl
+
+------------------------------------------------------------------------------
+Restarting the kubelet:
+------------------------------------------------------------------------------
+sudo systemctl daemon-reload
+sudo systemctl restart kubelet
+k uncordon <master-node>
+
+======================================================================================================================================================================================
+
+24: Context-Switching:
+k config use-context <cluster-name> [Switch the context to the mentioned cluster name].
+k config current-context {To view the current context.]
+k config get-contextx [To list all the contexts.]
+
+======================================================================================================================================================================================
+
+25. Backup and Restore:
+i) From the resources:
+BACKUP: k get po -A -o yaml > all_resource.yaml
+RESTORE: k apply -f all_resource.yaml
+
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+Important fields to make a note of from ETCD pod:
+--cert <cert-file>
+--cacert <trusted-ca-file>
+--key <key-file>
+--endpoints <listen-client-urls>
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ii) From an internal ETCD server [Stacked]:
+Ensure that etcd client is installed:
+sudo apt install etcd-client
+
+Ensure that the ETCDCTL_API=3, else you won't be able to use snapshot option:
+export ETCDCTL_API=3
+
+To take a backup:
+etcdctl snapshot save /opt/snapshot.db\
+--endpoints=https://127.0.0.1:2379 \
+--cacert=/etc/kubernetes/pki/etcd/ca.crt \
+--cert=/etc/kubernetes/pki/etcd/server.crt \
+--key=/etc/kubernetes/pki/etcd/server.key
+
+To restore from the taken backup:
+etcdctl snapshot restore /opt/snapshot.db \
+--data-dir=/var/libe/etcd-new-data \
+--endpoints=https://127.0.0.1:2379 \
+--cacert=/etc/kubernetes/pki/etcd/ca.crt \
+--cert=/etc/kubernetes/pki/etcd/server.crt \
+--key=/etc/kubernetes/pki/etcd/server.key
+
+Go to your etcd-server.yaml file and make the following changes:
+
+In command section for container in spec:
+--data-dir: <Your-new-data-dir-path>
+
+In volumeMounts section for container in spec:
+-mountPath: <new-data-dir-path>
+
+In volumes section for container in spec:
+- hostPath:
+	path:<new-data-dir-path>
+	type: DirectoryOrCreate
+  name: etcd-data
+	
+
+Restart the etcd service:
+sudo systemctl daemon-reload
+sudo systemctl restart etcd
+
+Also advisable to restart all the control plane-components:
+If components exists as static pod in yaml in /etc/kubernetes/manifests, cd to the path and  then run the following commands to restart:
+sudo mv *.yaml /tmp
+sudo mv /tmp/*.yaml .
+
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ii) From an external ETCD server [Stacked]:
+
+To get the default data-dir used by the external ETCD server, run the command:
+ps -ef | grep --color=auto etcd
+
+To get the number of members of the cluster:
+etcdctl  \
+--data-dir=/var/libe/etcd-new-data \
+--endpoints=https://127.0.0.1:2379 \
+--cacert=/etc/kubernetes/pki/etcd/ca.crt \
+--cert=/etc/kubernetes/pki/etcd/server.crt \
+--key=/etc/kubernetes/pki/etcd/server.key \
+member list
+
+To move files from remote to local:
+scp <remote-name>:<path-of-file-to-be-copied-from-remote> <path-to-copy-in-local>
+ex: scp cluster1-controlplane:/opt/snapshot.db /opt
+
+Follow the same steps as in (i) for backup and restore.
+
+To move files from local to remote:
+scp <path-of-file-to-be-copied-from-local> <remote-name>:<path-to-copy-in-remote>
+ex: scp /opt/cluster2.db etcd-server:/root
+
+If etcd.yaml file does not exist in /etc/kubernetes/manifest path, check out /etc/systemd/system/etcd.service
+
+Also ensure that the permissions for the new data-dir is given:
+chown -R etcd:etcd /var/lib/etcd-data-new
+
+======================================================================================================================================================================================
 
