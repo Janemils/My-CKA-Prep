@@ -310,3 +310,65 @@ chown -R etcd:etcd /var/lib/etcd-data-new
 
 ======================================================================================================================================================================================
 
+26. CERTIFICATES AND CERTIFICATE SIGNING REQUESTS:
+
+i) Generate the PKI private key using openssl:
+openssl genrsa -out learner.key 2048
+
+ii) Generate the CSR using the private key generated:
+openssl req -new -key learner.key -subj "/CN=learner" -out learner.csr
+
+iii) Converting the CSR to a base64 format to use for the csr yaml (tr -d "\n" will remove the unnecessary spaces in the request):
+cat learner.csr | base64 | tr -d "\n"
+
+iv) Create the csr.yaml with the request retrieved in base64 format and also edit expirationSeconds (Optional). Apply the manifest.
+
+v) Approve/Reject the signing request. (k certificate approve <csr-name>)
+
+vi) On approving the request, you will get a certificate generated. You can export it to a yaml file (k get csr <request-name> -o yaml > signed-cert.yaml)
+
+vii) Decode the certificate (echo <certificate> | base64 -d) and get it in ---BEGIN ................. format and save it in learner.crt file.
+
+======================================================================================================================================================================================
+
+26. CONTEXTS:
+
+i) k config get-contexts (Gets all the context in the kubeconfig file).
+ii) k config current-contexts (Get the current context).
+iii) k config set-credentials learner --client-key=learner.key --client-certificate=learner.crt --embed-certs=true (set credentials to create a new context using the certificate and key generated from above).
+iv) k config set-context learner --cluster=kind-cka-cluster --user=learner (Creates a new context with the user learner and cluster of your choice).
+v) k config use-context learner (Will switch to the learner context).
+
+
+======================================================================================================================================================================================
+
+27. ROLES AND ROLE-BINDINGS:
+
+i) k auth can-i get pods --as learner [To check if a particular user (learner, in this case) can perform the mentioned action (get) on the resource (pod)].
+ii) k auth whoami [To get the current user info].
+iii) kubectl create role pod-reader --verb=get --verb=list --verb=watch --resource=pods
+iv) kubectl create rolebinding learner-pod-reader-binding --role=pod-reader --user=learner
+Now, if you switch to the learner context and try k get po, you should be able to view the pods.
+
+======================================================================================================================================================================================
+
+28. CLUSTER ROLES AND CLUSTER ROLE-BINDINGS:
+
+i) kubectl create clusterrole node-reader --verb=get,list,watch --resource=nodes
+ii) kubectl create clusterrolebinding node-reader-binding --clusterrole=node-reader --user=learner
+
+======================================================================================================================================================================================
+
+28. SERVICE ACCOUNTS:
+
+i) k create sa my-first-sa
+ii) k get sa
+iii) k create rolebinding sa-rb --role pod-reader --user my-first-sa
+iv) k auth can-i get po --as my-first-sa
+
+
+
+
+
+
+
